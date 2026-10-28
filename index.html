@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Examen de Punto de Control - Módulos 14 y 15</title>
+  <style>
+    :root {
+      --bg-main: #0b0f19;
+      --bg-card: #111827;
+      --bg-card-hover: #1f2937;
+      --border: #1f2937;
+      --border-active: #38bdf8;
+      --accent: #38bdf8;
+      --accent-btn: #f8fafc;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --correct: #22c55e;
+      --correct-bg: rgba(34, 197, 94, 0.15);
+      --incorrect: #ef4444;
+      --incorrect-bg: rgba(239, 68, 68, 0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-main); color: var(--text-main); display: flex; justify-content: center; padding: 40px 20px; min-height: 100vh; }
+    .container { max-width: 800px; width: 100%; }
+
+    .header-badge { color: var(--accent); font-size: 0.75rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+    h1 { font-size: 2.2rem; font-weight: 800; line-height: 1.2; margin-bottom: 12px; }
+    p.description { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 30px; }
+
+    .section-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+    .section-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .section-title span { color: var(--accent); }
+
+    .grid-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+    .card-opt { background: #0b0f19; border: 1px solid var(--border); border-radius: 10px; padding: 18px; cursor: pointer; transition: all 0.2s; position: relative; }
+    .card-opt:hover { border-color: #374151; }
+    .card-opt.selected { border-color: var(--border-active); background: #0f172a; }
+    .card-opt input { position: absolute; top: 18px; right: 18px; accent-color: var(--accent); }
+    .card-opt h3 { font-size: 1rem; margin-bottom: 6px; }
+    .card-opt p { font-size: 0.8rem; color: var(--text-muted); }
+
+    .switch-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #1e293b; }
+    .switch-row:last-child { border-bottom: none; }
+    .switch-info h4 { font-size: 0.95rem; margin-bottom: 4px; }
+    .switch-info p { font-size: 0.8rem; color: var(--text-muted); }
+
+    .toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .3s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--accent); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    .summary-bar { display: flex; gap: 12px; margin-bottom: 24px; }
+    .sum-card { flex: 1; background: var(--bg-card); border: 1px solid var(--border); padding: 16px; border-radius: 10px; text-align: center; }
+    .sum-card label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px; }
+    .sum-card div { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+
+    .btn-start { width: 100%; background: var(--accent-btn); color: #000; border: none; padding: 16px; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+    .btn-start:hover { background: #e2e8f0; }
+
+    /* Estilos del Examen */
+    #quiz-screen, #result-screen { display: none; }
+    .top-stats { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--bg-card); padding: 14px 20px; border-radius: 10px; border: 1px solid var(--border); }
+    .q-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+    .q-text { font-size: 1.1rem; font-weight: 600; line-height: 1.5; margin-bottom: 20px; }
+    .options-list { display: flex; flex-direction: column; gap: 12px; }
+    .opt-btn { background: #0b0f19; border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; text-align: left; color: var(--text-main); font-size: 0.95rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; }
+    .opt-btn:hover { border-color: var(--accent); }
+    .opt-btn.correct { background: var(--correct-bg); border-color: var(--correct); color: #4ade80; }
+    .opt-btn.incorrect { background: var(--incorrect-bg); border-color: var(--incorrect); color: #f87171; }
+    .explanation-box { margin-top: 16px; padding: 16px; background: #0f172a; border-left: 4px solid var(--accent); border-radius: 6px; font-size: 0.9rem; line-height: 1.5; display: none; }
+    .nav-btns { display: flex; justify-content: flex-end; margin-top: 20px; }
+    .btn-action { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-action:hover { border-color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Pantalla 1: Configuración -->
+  <div id="config-screen">
+    <div class="header-badge">Examen de punto de control • Módulos 14 – 15</div>
+    <h1>Comunicaciones de aplicaciones de red, pregunta a pregunta.</h1>
+    <p class="description">Practica la capa de transporte (TCP/UDP), capa de aplicación, protocolos web, correo y direccionamiento con el banco completo. Elige cómo quieres evaluarte antes de empezar.</p>
+
+    <div class="section-box">
+      <div class="section-title"><span>01</span> Sección del cuestionario</div>
+      <div class="grid-options">
+        <div class="card-opt selected" onclick="selectSection(this, 'all')">
+          <input type="radio" name="sec" checked>
+          <h3>Banco completo</h3>
+          <p>Las 58 preguntas</p>
+        </div>
+        <div class="card-opt" onclick="selectSection(this, 'random37')">
+          <input type="radio" name="sec">
+          <h3>Simulacro aleatorio</h3>
+          <p>37 preguntas al azar</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-box">
+      <div class="section-title"><span>02</span> Modo de evaluación</div>
+      <div class="grid-options">
+        <div class="card-opt selected" onclick="selectMode(this, 'practice')">
+          <input type="radio" name="mode" checked>
+          <h3>Práctica</h3>
+          <p>Verifica cada respuesta y lee la explicación al instante.</p>
+        </div>
+        <div class="card-opt" onclick="selectMode(this, 'exam')">
+          <input type="radio" name="mode">
+          <h3>Realista</h3>
+          <p>Sin retroalimentación: las respuestas se guardan hasta finalizar.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-box">
+      <div class="section-title"><span>03</span> Desafíos opcionales</div>
+      <div class="switch-row">
+        <div class="switch-info">
+          <h4>Preguntas en orden aleatorio</h4>
+          <p>Cambia el orden de las preguntas en cada intento.</p>
+        </div>
+        <label class="toggle"><input type="checkbox" id="chk-shuffle-q" checked><span class="slider"></span></label>
+      </div>
+      <div class="switch-row">
+        <div class="switch-info">
+          <h4>Opciones en orden aleatorio</h4>
+          <p>Mezcla las respuestas de cada pregunta.</p>
+        </div>
+        <label class="toggle"><input type="checkbox" id="chk-shuffle-o" checked><span class="slider"></span></label>
+      </div>
+    </div>
+
+    <div class="summary-bar">
+      <div class="sum-card"><label>Preguntas</label><div id="sum-qcount">58</div></div>
+      <div class="sum-card"><label>Modo</label><div id="sum-mode">Práctica</div></div>
+      <div class="sum-card"><label>Vidas</label><div>Sin límite</div></div>
+    </div>
+
+    <button class="btn-start" onclick="startQuiz()">Comenzar examen →</button>
+  </div>
+
+  <!-- Pantalla 2: Examen -->
+  <div id="quiz-screen">
+    <div class="top-stats">
+      <div>Pregunta <span id="q-curr">1</span> de <span id="q-total">58</span></div>
+      <div id="timer-display">Tiempo Libre</div>
+    </div>
+
+    <div class="q-card">
+      <div class="q-text" id="q-title">Cargando...</div>
+      <div class="options-list" id="q-options"></div>
+      <div class="explanation-box" id="q-explanation"></div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn-action" onclick="nextQuestion()" id="btn-next">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- Pantalla 3: Resultados -->
+  <div id="result-screen">
+    <div class="section-box" style="text-align: center; padding: 40px;">
+      <h2>Examen Finalizado</h2>
+      <p class="description">Este es tu resultado final según las respuestas registradas:</p>
+      <div style="font-size: 3.5rem; font-weight: 800; color: var(--accent); margin: 20px 0;" id="final-score">0 / 58</div>
+      <p id="final-msg" style="margin-bottom: 24px;"></p>
+      <button class="btn-start" onclick="location.reload()">Volver a intentar ↻</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const rawQuestions = [
+    {
+      question: "¿Cuáles son los tres campos que se utilizan en el encabezado de un segmento UDP? (Elija tres opciones)",
+      options: ["Puerto de origen", "Número de secuencia", "Longitud", "Tamaño de la ventana", "Checksum (Suma de comprobación)"],
+      answer: "Puerto de origen",
+      explanation: "El encabezado UDP consta únicamente de 4 campos simples (8 bytes en total): Puerto de origen, Puerto de destino, Longitud y Suma de comprobación. Los campos de ventana y secuencia son exclusivos de TCP."
+    },
+    {
+      question: "Una PC está descargando un archivo grande de un servidor web mediante TCP. Si el tamaño de ventana es de 10,000 bytes y el cliente recibe 2 segmentos de 1,460 bytes, ¿cuál será el número de acuse de recibo (ACK) en la respuesta?",
+      options: ["ACK 1461", "ACK 2920", "ACK 2921", "ACK 10001"],
+      answer: "ACK 2921",
+      explanation: "Al recibir 2,920 bytes (1,460 * 2), TCP acusa recibo solicitando el número del siguiente byte que espera recibir: 2,920 + 1 = 2,921."
+    },
+    {
+      question: "¿Cuáles son dos funciones de la capa de transporte en la comunicación de datos? (Elija dos opciones)",
+      options: ["Hacer un seguimiento de las transmisiones individuales entre aplicaciones", "Proporcionar delimitación de tramas", "Identificar la aplicación apropiada mediante el uso de números de puerto", "Dirigir paquetes mediante enrutamiento IP"],
+      answer: "Hacer un seguimiento de las transmisiones individuales entre aplicaciones",
+      explanation: "La capa de transporte rastrea las conversaciones entre hosts y utiliza puertos de origen y destino para enviar los datos a la aplicación receptora adecuada."
+    },
+    {
+      question: "¿Qué información importante se agrega al encabezado de la capa de transporte para asegurar la comunicación hacia un servicio específico?",
+      options: ["Direcciones MAC de origen y destino", "Números de puerto de origen y destino", "Direcciones IP de origen y destino", "Secuencia de verificación de trama (FCS)"],
+      answer: "Números de puerto de origen y destino",
+      explanation: "Los números de puerto identifican la aplicación o servicio destino específico en el servidor."
+    },
+    {
+      question: "¿Qué indicador (flag) envía el host cliente en el primer segmento para iniciar la sesión en el Handshake de 3 vías de TCP?",
+      options: ["ACK", "FIN", "SYN", "RST"],
+      answer: "SYN",
+      explanation: "La sesión TCP inicia siempre con una solicitud del cliente mediante la bandera SYN (Sincronización)."
+    },
+    {
+      question: "¿Qué tres mensajes forman parte del proceso DORA de DHCP? (Elija tres opciones)",
+      options: ["DHCPDISCOVER", "DHCPOFFER", "DHCPCONNECT", "DHCPREQUEST", "DHCPOPEN"],
+      answer: "DHCPDISCOVER",
+      explanation: "El proceso DORA consta de: Discover (Descubrimiento), Offer (Oferta), Request (Solicitud) y Acknowledge (Acuse de recibo)."
+    },
+    {
+      question: "¿Qué función cumple el comando nslookup?",
+      options: ["Muestra la ruta IP hacia un servidor", "Permite consultar manualmente a un servidor DNS para resolver nombres o direcciones IP", "Muestra los puertos TCP abiertos", "Renueva la dirección IP"],
+      answer: "Permite consultar manualmente a un servidor DNS para resolver nombres o direcciones IP",
+      explanation: "Nslookup es la herramienta de consola para diagnosticar la resolución de nombres solicitando registros a los servidores DNS."
+    },
+    {
+      question: "¿Qué protocolo debe seleccionarse para mantener los correos guardados centralizadamente en el servidor después de revisarlos?",
+      options: ["POP3", "IMAP", "SMTP", "HTTPS"],
+      answer: "IMAP",
+      explanation: "A diferencia de POP3, IMAP descarga una copia local y mantiene los correos originales centralizados en el servidor."
+    },
+    {
+      question: "¿Cuáles son los números de puerto utilizados por el protocolo FTP?",
+      options: ["Control: TCP 20 / Datos: TCP 21", "Control: TCP 21 / Datos: TCP 20", "Control: UDP 69 / Datos: UDP 68", "Control: TCP 80 / Datos: TCP 443"],
+      answer: "Control: TCP 21 / Datos: TCP 20",
+      explanation: "FTP utiliza el puerto 21 para enviar comandos de control y el puerto 20 para transferir los archivos de datos."
+    },
+    {
+      question: "¿Qué define a un par de sockets (socket pair)?",
+      options: ["La dirección MAC de origen y destino", "La combinación de IP:Puerto de origen e IP:Puerto de destino", "El ISN y el tamaño de ventana", "La máscara de subred y la IP del gateway"],
+      answer: "La combinación de IP:Puerto de origen e IP:Puerto de destino",
+      explanation: "Un socket pair identifica de forma única la sesión de comunicación entre cliente y servidor (ej. 192.168.1.5:49152, 198.133.219.25:80)."
+    },
+    {
+      question: "¿Cuál es el tamaño del encabezado de un segmento TCP estándar sin opciones?",
+      options: ["8 bytes", "16 bytes", "20 bytes", "64 bytes"],
+      answer: "20 bytes",
+      explanation: "El encabezado TCP requiere 20 bytes (160 bits) de sobrecarga para garantizar la confiabilidad, frente a los 8 bytes de UDP."
+    },
+    {
+      question: "¿Qué registro DNS se utiliza específicamente para mapear un nombre de dominio a una dirección IPv6?",
+      options: ["Registro A", "Registro MX", "Registro AAAA", "Registro NS"],
+      answer: "Registro AAAA",
+      explanation: "El registro AAAA (Quad-A) traduce dominios a IPv6. El registro A se usa exclusivamente para direcciones IPv4."
+    },
+    {
+      question: "¿Cuál es una ventaja del protocolo SMB en comparación con FTP?",
+      options: ["SMB utiliza UDP para transferencias más rápidas", "Los clientes SMB establecen conexiones a largo plazo a los recursos compartidos", "SMB no requiere autenticación", "FTP no permite transferir archivos ejecutables"],
+      answer: "Los clientes SMB establecen conexiones a largo plazo a los recursos compartidos",
+      explanation: "SMB permite que el usuario acceda a archivos e impresoras en red como si fueran recursos locales conectados continuamente."
+    },
+    {
+      question: "¿Qué protocolo de transporte utiliza aplicaciones en tiempo real como VoIP debido a su menor retraso?",
+      options: ["TCP", "UDP", "IP", "ICMP"],
+      answer: "UDP",
+      explanation: "UDP no retransmite datos ni exige acuses de recibo, reduciendo la latencia requerida por la voz y el video interactivo."
+    },
+    {
+      question: "¿Qué bandera TCP utiliza un dispositivo para solicitar el cierre de una sesión?",
+      options: ["SYN", "ACK", "FIN", "RST"],
+      answer: "FIN",
+      explanation: "La bandera FIN (Finish) indica que la aplicación emisora ha terminado de enviar datos y desea cerrar la conexión."
+    },
+    {
+      question: "¿Cuál es la función principal de la capa de presentación en el modelo OSI?",
+      options: ["Direccionar paquetes entre redes", "Formatear, comprimir y cifrar los datos para la aplicación", "Gestionar el diálogo entre sesiones", "Controlar los medios físicos"],
+      answer: "Formatear, comprimir y cifrar los datos para la aplicación",
+      explanation: "La capa de presentación asegura que la información enviada por la capa de aplicación de un sistema sea legible por la capa de aplicación de otro."
+    },
+    {
+      question: "¿Qué protocolo de correo se utiliza exclusivamente para enviar correos de un cliente a un servidor?",
+      options: ["POP3", "IMAP", "SMTP", "HTTP"],
+      answer: "SMTP",
+      explanation: "SMTP (Simple Mail Transfer Protocol) se encarga de enviar y transportar emails entre clientes y servidores."
+    },
+    {
+      question: "¿Cuál es el puerto de destino por defecto para el protocolo seguro HTTPS?",
+      options: ["80", "443", "22", "110"],
+      answer: "443",
+      explanation: "HTTPS utiliza el puerto bien conocido TCP 443 con cifrado TLS/SSL."
+    },
+    {
+      question: "¿Qué mecanismo de TCP evita que el emisor sature de datos la memoria intermedia (buffer) del receptor?",
+      options: ["Handshake de 3 vías", "Control de flujo mediante el tamaño de ventana", "Números de secuencia aleatorios", "Comprobación de suma de 16 bits"],
+      answer: "Control de flujo mediante el tamaño de ventana",
+      explanation: "El tamaño de ventana indica cuántos bytes puede procesar el receptor antes de exigir una confirmación."
+    },
+    {
+      question: "¿Qué tipo de aplicación P2P se caracteriza por utilizar archivos torrent y servidores de seguimiento?",
+      options: ["Gnutella", "BitTorrent", "eDonkey", "Direct Connect"],
+      answer: "BitTorrent",
+      explanation: "BitTorrent utiliza archivos .torrent para ubicar múltiples pares que poseen piezas del archivo deseado simultáneamente."
+    },
+    {
+      question: "¿Qué parámetro de red NO entrega DHCPv6 de forma dinámica a los clientes?",
+      options: ["Dirección IPv6", "Servidor DNS IPv6", "Dirección de Gateway predeterminado", "Nombre de dominio"],
+      answer: "Dirección de Gateway predeterminado",
+      explanation: "En IPv6, la puerta de enlace predeterminada se obtiene directamente de los anuncios de router (RA) de ICMPv6, no por DHCPv6."
+    },
+    {
+      question: "¿Qué utilidad muestra las conexiones TCP activas abiertas en la máquina local?",
+      options: ["ping", "netstat", "nslookup", "tracert"],
+      answer: "netstat",
+      explanation: "El comando `netstat` enumera los protocolos activos, puertos de origen/destino y el estado actual de las conexiones TCP."
+    },
+    {
+      question: "¿Qué característica describe a un protocolo sin estado (stateless) como UDP?",
+      options: ["Realiza un seguimiento continuo del estado de entrega de los mensajes", "No realiza un seguimiento de los mensajes ni conserva el estado de la sesión", "Requiere una conexión previa obligatoria", "Garantiza el orden correcto de llegada"],
+      answer: "No realiza un seguimiento de los mensajes ni conserva el estado de la sesión",
+      explanation: "Los protocolos sin estado no recuerdan las transacciones anteriores ni gestionan la confirmación de llegada."
+    },
+    {
+      question: "¿Qué método HTTP envía datos al servidor web mediante un formulario?",
+      options: ["GET", "POST", "PUT", "DELETE"],
+      answer: "POST",
+      explanation: "El método POST sube bloques de datos como datos de formulario al servidor web."
+    },
+    {
+      question: "¿Qué tipo de puertos asigna dinámicamente el sistema operativo cliente para iniciar una comunicación (ej. 49152 a 65535)?",
+      options: ["Puertos bien conocidos", "Puertos registrados", "Puertos efímeros o dinámicos", "Puertos de control"],
+      answer: "Puertos efímeros o dinámicos",
+      explanation: "Los puertos 49152-65535 son asignados al azar por el sistema cliente para identificar la aplicación solicitante."
+    },
+    {
+      question: "¿Qué significa que TCP sea un protocolo Full-Duplex?",
+      options: ["Que solo transmite datos en un sentido a la vez", "Que permite la comunicación simultánea en ambas direcciones en la misma conexión", "Que utiliza UDP para enviar confirmaciones", "Que exige conexión por fibra óptica"],
+      answer: "Que permite la comunicación simultánea en ambas direcciones en la misma conexión",
+      explanation: "Full-duplex en TCP significa que cada enlace mantiene dos sesiones lógicas independientes de comunicación activa bidireccional."
+    },
+    {
+      question: "¿Cuál es el valor predeterminado del tamaño máximo de segmento (MSS) en Ethernet IPv4?",
+      options: ["1500 bytes", "1460 bytes", "1480 bytes", "536 bytes"],
+      answer: "1460 bytes",
+      explanation: "Restando el encabezado IPv4 (20 bytes) y TCP (20 bytes) del MTU de Ethernet (1500 bytes), el MSS resultante es de 1460 bytes."
+    },
+    {
+      question: "¿Qué registro DNS asocia una dirección IP con un nombre de servidor autoritativo para una zona?",
+      options: ["Registro A", "Registro NS", "Registro MX", "Registro CNAME"],
+      answer: "Registro NS",
+      explanation: "El registro NS (Name Server) identifica los servidores de nombres autorizados para gestionar la zona DNS."
+    },
+    {
+      question: "¿Qué paso del proceso DORA representa la respuesta del servidor al cliente con la IP ofrecida?",
+      options: ["DHCPDISCOVER", "DHCPOFFER", "DHCPREQUEST", "DHCPACK"],
+      answer: "DHCPOFFER",
+      explanation: "DHCPOFFER es el mensaje unicas/broadcast mediante el cual el servidor ofrece una dirección disponible al cliente."
+    },
+    {
+      question: "¿Cuál es la función del campo Checksum en UDP y TCP?",
+      options: ["Ordenar los paquetes recibidos", "Verificar si el encabezado o los datos sufrieron errores o corrupción en el viaje", "Ajustar la velocidad de transmisión", "Identificar el servidor de correo"],
+      answer: "Verificar si el encabezado o los datos sufrieron errores o corrupción en el viaje",
+      explanation: "El campo Checksum realiza una comprobación matemática para garantizar la integridad binaria de la trama."
+    },
+    {
+      question: "¿Qué protocolo sustituyó al antiguo protocolo BOOTP para la asignación dinámica de parámetros de red?",
+      options: ["DNS", "DHCP", "ARP", "ICMP"],
+      answer: "DHCP",
+      explanation: "DHCP fue creado como una evolución avanzada de BOOTP para permitir la reutilización y concesión temporal de direcciones IP."
+    },
+    {
+      question: "¿Qué bandera TCP reajusta o cierra abruptamente una sesión cuando ocurre un error crítico?",
+      options: ["SYN", "FIN", "RST", "PSH"],
+      answer: "RST",
+      explanation: "La bandera RST (Reset) restablece la conexión inmediatamente cuando hay un error o tiempo de espera agotado."
+    },
+    {
+      question: "¿Qué protocolo de transferencia de archivos opera sobre UDP en el puerto 69 y no requiere autenticación?",
+      options: ["FTP", "TFTP", "SFTP", "SMB"],
+      answer: "TFTP",
+      explanation: "TFTP (Trivial FTP) utiliza UDP puerto 69 para transferencias simples de imágenes IOS o configuraciones sin autenticación."
+    },
+    {
+      question: "¿Qué capa del modelo TCP/IP agrupa las funciones de las capas de Aplicación, Presentación y Sesión del modelo OSI?",
+      options: ["Capa de Red", "Capa de Aplicación", "Capa de Transporte", "Capa de Acceso a la Red"],
+      answer: "Capa de Aplicación",
+      explanation: "En el modelo TCP/IP, la capa de Aplicación abarca todas las funciones representadas por las 3 capas superiores de OSI."
+    },
+    {
+      question: "¿Cómo se denomina al período de tiempo durante el cual una IP asignada por DHCP es válida para el cliente?",
+      options: ["Período de concesión (Lease Time)", "Tiempo de vida (TTL)", "Tiempo de ventana (Windowing)", "Handshake de sesión"],
+      answer: "Período de concesión (Lease Time)",
+      explanation: "El tiempo de concesión establece la validez de la IP antes de que el cliente deba solicitar su renovación con un DHCPREQUEST."
+    },
+    {
+      question: "¿Qué puerto de destino utiliza por defecto el protocolo SSH para la administración remota segura?",
+      options: ["21", "22", "23", "80"],
+      answer: "22",
+      explanation: "SSH utiliza el puerto TCP 22, ofreciendo sesiones remotas cifradas en sustitución de Telnet (puerto 23)."
+    },
+    {
+      question: "¿Qué técnica opcional de TCP permite al receptor confirmar bloques discontinuos de datos recibidos?",
+      options: ["Ventana deslizante estándar", "SACK (Selective Acknowledgment)", "Fast Retransmit", "Handshake SYN-ACK"],
+      answer: "SACK (Selective Acknowledgment)",
+      explanation: "SACK permite que el emisor retransmita únicamente los datos faltantes en lugar de repetir todos los segmentos posteriores."
+    },
+    {
+      question: "¿Qué tipo de mensaje de difusión envía el cliente DHCPDISCOVER a la red?",
+      options: ["Unicast a la dirección 192.168.1.1", "Broadcast con IP destino 255.255.255.255 y MAC FF-FF-FF-FF-FF-FF", "Multicast a la dirección ff02::1", "Anycast al servidor más cercano"],
+      answer: "Broadcast con IP destino 255.255.255.255 y MAC FF-FF-FF-FF-FF-FF",
+      explanation: "Como el cliente carece de IP al iniciar, emite una solicitud por difusión a toda la red física local."
+    },
+    {
+      question: "¿Qué puerto utiliza el servicio DNS para realizar transferencias de zona entre servidores de nombres?",
+      options: ["UDP 53", "TCP 53", "TCP 80", "UDP 67"],
+      answer: "TCP 53",
+      explanation: "Aunque las consultas de clientes usan UDP 53, las transferencias de zona entre servidores DNS requieren la confiabilidad de TCP 53."
+    },
+    {
+      question: "En una red Peer-to-Peer (P2P), ¿cuál es el rol de cada dispositivo terminal conectado?",
+      options: ["Todos los dispositivos actúan exclusivamente como clientes", "Un dispositivo actúa centralizadamente como servidor dedicado", "Cada dispositivo puede actuar simultáneamente como cliente y como servidor según la transacción", "Los dispositivos requieren obligatoriamente un enrutador de dominio"],
+      answer: "Cada dispositivo puede actuar simultáneamente como cliente y como servidor según la transacción",
+      explanation: "En redes P2P no existen servidores dedicados; los nodos comparten recursos actuando en ambos roles."
+    },
+    {
+      question: "¿Qué método HTTP se utiliza para cargar nuevos contenidos o recursos en el servidor web?",
+      options: ["GET", "POST", "PUT", "HEAD"],
+      answer: "PUT",
+      explanation: "El mensaje HTTP PUT se utiliza para subir o reemplazar recursos e imágenes directamente en el servidor destino."
+    },
+    {
+      question: "¿Cuáles son las tres partes principales de una URL como http://www.cisco.com/index.html?",
+      options: ["IP, Máscara y Gateway", "Protocolo/esquema, Nombre del servidor y Nombre de archivo solicitado", "Dirección MAC, Puerto e IP", "Dominio raíz, TLD y Subdominio"],
+      answer: "Protocolo/esquema, Nombre del servidor y Nombre de archivo solicitado",
+      explanation: "La URL se divide en: Protocolo (http), Servidor (www.cisco.com) y Archivo (index.html)."
+    },
+    {
+      question: "¿Qué encabezado de capa de transporte es más ligero debido a que solo mide 8 bytes de longitud?",
+      options: ["TCP", "UDP", "IP", "Ethernet"],
+      answer: "UDP",
+      explanation: "UDP sacrifica controles de flujo y reordenamiento a cambio de una sobrecarga mínima de 8 bytes por datagrama."
+    },
+    {
+      question: "¿Qué bandera de control TCP confirma la recepción de un segmento anterior?",
+      options: ["SYN", "ACK", "URG", "FIN"],
+      answer: "ACK",
+      explanation: "La bandera ACK (Acknowledgment) valida que la recepción de datos fue correcta e indica el siguiente byte esperado."
+    },
+    {
+      question: "¿Qué tipo de registro DNS asocia un nombre de dominio alternativo con el nombre canónico o verdadero?",
+      options: ["Registro A", "Registro MX", "Registro CNAME", "Registro PTR"],
+      answer: "Registro CNAME",
+      explanation: "CNAME (Canonical Name) crea un alias que redirige un nombre de dominio a otro nombre previamente registrado."
+    },
+    {
+      question: "Cuando la red detecta congestión y los segmentos sufren pérdidas, ¿cómo responde el emisor TCP?",
+      options: ["Aumenta el tamaño de la ventana de envío", "Reduce dinámicamente la cantidad de bytes que envía sin confirmación", "Cambia automáticamente al protocolo UDP", "Cierra de inmediato la interfaz de red"],
+      answer: "Reduce dinámicamente la cantidad de bytes que envía sin confirmación",
+      explanation: "Los algoritmos de control de congestión de TCP ralentizan el ritmo de transmisión al detectar paquetes sin acuse de recibo."
+    },
+    {
+      question: "¿Qué protocolo de capa de aplicación utiliza el puerto TCP 110 por defecto?",
+      options: ["POP3", "IMAP", "SMTP", "DNS"],
+      answer: "POP3",
+      explanation: "El protocolo de descarga de correos POP3 escucha peticiones en el puerto bien conocido TCP 110."
+    },
+    {
+      question: "¿Qué ocurre cuando expira el tiempo de concesión de una dirección IP en un cliente DHCP?",
+      options: ["La dirección pasa a ser estática indefinidamente", "La IP se devuelve al pool del servidor DHCP para su reutilización si no es renovada", "La computadora apaga su tarjeta de red", "Se fuerza la asignación de una IPv6"],
+      answer: "La IP se devuelve al pool del servidor DHCP para su reutilización si no es renovada",
+      explanation: "Si el cliente no envía un DHCPREQUEST para renovar la concesión, la IP es reclamada por el servidor."
+    },
+    {
+      question: "¿Qué puerto de servicio de autenticación RADIUS utiliza UDP según los registros de IANA?",
+      options: ["1812", "53", "67", "161"],
+      answer: "1812",
+      explanation: "El servidor de autenticación y acceso remoto RADIUS opera por defecto en el puerto registrado UDP 1812."
+    },
+    {
+      question: "¿Qué función cumple el protocolo de capa de sesión según el modelo OSI?",
+      options: ["Dividir los segmentos en paquetes", "Crear, mantener y finalizar diálogos activos entre aplicaciones", "Cifrar el tráfico de datos", "Asignar puertos efímeros"],
+      answer: "Crear, mantener y finalizar diálogos activos entre aplicaciones",
+      explanation: "La capa de sesión organiza la sincronización y el intercambio continuado de diálogo entre las aplicaciones cliente/servidor."
+    },
+    {
+      question: "¿Qué capa de la arquitectura TCP/IP incluye los servicios HTTP, FTP, DNS y DHCP?",
+      options: ["Acceso a la Red", "Internet", "Transporte", "Aplicación"],
+      answer: "Aplicación",
+      explanation: "HTTP, FTP, DNS y DHCP son todos protocolos de alto nivel pertenecientes a la capa de Aplicación."
+    },
+    {
+      question: "En una sesión TCP, ¿quién determina el valor inicial del tamaño de ventana?",
+      options: ["El router por donde viajan los paquetes", "El dispositivo de destino según su capacidad de memoria buffer disponible", "El ISP de origen", "Es un valor fijo inalterable de 65,535 bytes"],
+      answer: "El dispositivo de destino según su capacidad de memoria buffer disponible",
+      explanation: "El receptor anuncia su tamaño de ventana para comunicarle al emisor la cantidad máxima de bytes que puede procesar sin desbordarse."
+    },
+    {
+      question: "¿Qué rango de puertos comprende los denominados 'Puertos Bien Conocidos' (Well-Known Ports)?",
+      options: ["0 al 1023", "1024 al 49151", "49152 al 65535", "100 al 500"],
+      answer: "0 al 1023",
+      explanation: "Los puertos 0 al 1023 son reservados por IANA para servicios y aplicaciones globales estandarizados."
+    },
+    {
+      question: "¿Qué mecanismo de TCP se conoce como 'Ventana Deslizante' (Sliding Window)?",
+      options: ["El cierre gradual de los puertos al desconectar", "El ajuste continuo del tamaño de la ventana de envío conforme se reciben las confirmaciones", "La encriptación progresiva de los archivos", "La asignación aleatoria de puertos"],
+      answer: "El ajuste continuo del tamaño de la ventana de envío conforme se reciben las confirmaciones",
+      explanation: "Permite que el emisor envíe datos continuos mientras la ventana 'se desliza' con cada acuse de recibo entrante."
+    },
+    {
+      question: "¿Qué protocolo de correo opera en el puerto TCP 143?",
+      options: ["IMAP", "POP3", "SMTP", "HTTP"],
+      answer: "IMAP",
+      explanation: "El servicio de sincronización de carpetas de correo IMAP utiliza el puerto de red TCP 143."
+    },
+    {
+      question: "¿Qué sucede si una consulta DNS no puede ser resuelta directamente por el servidor DNS local?",
+      options: ["La conexión se rechaza inmediatamente", "El servidor DNS reenvía la consulta a otros servidores dentro de la jerarquía DNS", "El cliente debe reiniciar el router", "Se asigna una dirección IP aleatoria al cliente"],
+      answer: "El servidor DNS reenvía la consulta a otros servidores dentro de la jerarquía DNS",
+      explanation: "Los servidores DNS consultan recursiva o iterativamente a servidores raíz o de nivel superior para resolver el nombre."
+    },
+    {
+      question: "¿Qué mensaje final confirma la terminación completa del Handshake de 4 vías para cerrar una conexión TCP?",
+      options: ["SYN", "ACK", "FIN-ACK", "RST"],
+      answer: "ACK",
+      explanation: "El proceso de terminación culmina cuando el emisor original responde con un ACK final confirmando el FIN enviado por la contraparte."
+    },
+    {
+      question: "¿Qué puerto utiliza el protocolo SNMP para el monitoreo y gestión simple de redes sobre UDP?",
+      options: ["161", "110", "69", "53"],
+      answer: "161",
+      explanation: "El protocolo SNMP (Simple Network Management Protocol) utiliza el puerto UDP 161."
+    }
+  ];
+
+  let currentQuestions = [];
+  let currentIndex = 0;
+  let score = 0;
+  let config = { section: 'all', mode: 'practice', shuffleQ: true, shuffleO: true };
+
+  function selectSection(el, val) {
+    document.querySelectorAll('[name="sec"]').forEach(i => i.parentNode.classList.remove('selected'));
+    el.classList.add('selected');
+    config.section = val;
+    document.getElementById('sum-qcount').innerText = val === 'all' ? 58 : 37;
+  }
+
+  function selectMode(el, val) {
+    document.querySelectorAll('[name="mode"]').forEach(i => i.parentNode.classList.remove('selected'));
+    el.classList.add('selected');
+    config.mode = val;
+    document.getElementById('sum-mode').innerText = val === 'practice' ? 'Práctica' : 'Realista';
+  }
+
+  function startQuiz() {
+    config.shuffleQ = document.getElementById('chk-shuffle-q').checked;
+    config.shuffleO = document.getElementById('chk-shuffle-o').checked;
+
+    currentQuestions = [...rawQuestions];
+    if (config.shuffleQ) currentQuestions.sort(() => Math.random() - 0.5);
+    if (config.section === 'random37') currentQuestions = currentQuestions.slice(0, 37);
+
+    document.getElementById('config-screen').style.display = 'none';
+    document.getElementById('quiz-screen').style.display = 'block';
+    document.getElementById('q-total').innerText = currentQuestions.length;
+
+    showQuestion();
+  }
+
+  function showQuestion() {
+    const q = currentQuestions[currentIndex];
+    document.getElementById('q-curr').innerText = currentIndex + 1;
+    document.getElementById('q-title').innerText = `${currentIndex + 1}. ${q.question}`;
+    document.getElementById('q-explanation').style.display = 'none';
+
+    let opts = [...q.options];
+    if (config.shuffleO) opts.sort(() => Math.random() - 0.5);
+
+    const container = document.getElementById('q-options');
+    container.innerHTML = '';
+
+    opts.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.innerText = opt;
+      btn.onclick = () => checkAnswer(btn, opt, q);
+      container.appendChild(btn);
+    });
+  }
+
+  function checkAnswer(btn, selectedOpt, q) {
+    const allBtns = document.querySelectorAll('.opt-btn');
+    allBtns.forEach(b => b.disabled = true);
+
+    const isCorrect = selectedOpt === q.answer;
+    if (isCorrect) {
+      btn.classList.add('correct');
+      score++;
+    } else {
+      btn.classList.add('incorrect');
+      allBtns.forEach(b => { if (b.innerText === q.answer) b.classList.add('correct'); });
+    }
+
+    if (config.mode === 'practice') {
+      const expBox = document.getElementById('q-explanation');
+      expBox.innerHTML = `<strong>Explicación:</strong> ${q.explanation}`;
+      expBox.style.display = 'block';
+    }
+  }
+
+  function nextQuestion() {
+    if (currentIndex < currentQuestions.length - 1) {
+      currentIndex++;
+      showQuestion();
+    } else {
+      showResults();
+    }
+  }
+
+  function showResults() {
+    document.getElementById('quiz-screen').style.display = 'none';
+    document.getElementById('result-screen').style.display = 'block';
+    document.getElementById('final-score').innerText = `${score} / ${currentQuestions.length}`;
+    const pct = ((score / currentQuestions.length) * 100).toFixed(0);
+    document.getElementById('final-msg').innerText = pct >= 70 ? `¡Excelente! Aprobaste con un ${pct}%.` : `Puntuación: ${pct}%. Se recomienda repasar antes del examen oficial.`;
+  }
+</script>
+</body>
+</html>
